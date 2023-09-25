@@ -1,8 +1,13 @@
 ---
 title: Shortcodes
 description: Useful shortcodes that can be used in Markdown
-date: 2023-08-25 00:00:00+0000
-image: cover.jpg
+date: 2003-08-25 00:00:00+0000
+image: img/writing3.jpg
+tags: 
+    - Markdown
+    - Blog
+categories:
+    - 文档
 ---
 
 For more details, check out the [documentation](https://stack.jimmycai.com/writing/shortcodes).

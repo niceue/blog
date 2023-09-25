@@ -16,9 +16,9 @@ url = "https://github.com/niceue"
 icon = "brand-github"
 
 [[social]]
-identifier = "twitter"
-name = "Twitter"
-url = "https://twitter.com"
+identifier = "mail"
+name = "Mail"
+url = "mailto:jony.zhang@outlook.com"
 
 [social.params]
-icon = "brand-twitter"
+icon = "mail"

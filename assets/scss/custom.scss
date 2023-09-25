@@ -1,3 +1,14 @@
 /*
     You can add your own custom styles here.
 */
+:root {
+    --menu-icon-separation: 20px;
+}
+.sidebar {
+    header .site-name {
+        font-size: 2rem;
+    }
+    .site-meta {gap: 5px;}
+    .social-menu {margin-top: -5px;}
+    .menu {margin-top: 10px; font-size: 1.6rem;}
+}
