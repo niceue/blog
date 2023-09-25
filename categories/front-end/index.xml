@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Front-end on Jony's Blog</title><link>https://blog.niceue.com/categories/front-end/</link><description>Recent content in Front-end on Jony's Blog</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Wed, 28 Mar 2018 16:43:00 +0000</lastBuildDate><atom:link href="https://blog.niceue.com/categories/front-end/index.xml" rel="self" type="application/rss+xml"/><item><title>在 Electron 使用 Node.js 原生模块</title><link>https://blog.niceue.com/p/using-node.js-native-modules-in-electron/</link><pubDate>Wed, 28 Mar 2018 16:43:00 +0000</pubDate><guid>https://blog.niceue.com/p/using-node.js-native-modules-in-electron/</guid><description>&lt;img src="https://blog.niceue.com/img/electron.webp" alt="Featured image of post 在 Electron 使用 Node.js 原生模块" />&lt;p>Node.js 原生模块是用 C++ 编写的 Node.js 扩展。C++ 源码通过 &lt;a class="link" href="https://github.com/nodejs/node-gyp" target="_blank" rel="noopener"
+>node-gyp&lt;/a> 编译为 .node 后缀的二进制文件（类似于 .dll 和 .so）。在 Node.js 环境中可以直接用 require() 函数将 .node 文件初始化为动态链接库。一些 npm 包会包含 C++ 扩展，例如： &lt;a class="link" href="https://github.com/node-ffi/node-ffi" target="_blank" rel="noopener"
+>node-ffi&lt;/a>、&lt;a class="link" href="https://github.com/bnoordhuis/node-iconv" target="_blank" rel="noopener"
+>node-iconv&lt;/a>、&lt;a class="link" href="https://github.com/tessel/node-usb" target="_blank" rel="noopener"
+>node-usb&lt;/a>，但都是源码版本，在安装后需要编译后才能被 Node.js 调用。&lt;/p>
+&lt;p>Electron 同样也支持 Node 原生模块，但由于和官方的 Node 相比使用了不同的 V8 引擎，如果你想编译原生模块，则需要手动设置 Electron 的 headers 的位置。&lt;/p>
+&lt;h2 id="环境准备">环境准备&lt;/h2>
+&lt;p>不管是 Node.js 环境或是 Electron 中使用原生模块，都需要准备一个编译工具 &lt;a class="link" href="https://github.com/nodejs/node-gyp" target="_blank" rel="noopener"
+>node-gyp&lt;/a>。我们这里使用的是 windows 环境开发，参考 node-gyp 的安装说明还需要安装 &lt;a class="link" href="https://github.com/felixrieseberg/windows-build-tools" target="_blank" rel="noopener"
+>windows-build-tools&lt;/a>。&lt;/p>
+&lt;p>用管理员权限打开 CMD 或 PowerShell 窗口，运行以下命令：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-shell" data-lang="shell">&lt;span class="line">&lt;span class="cl">npm i -g node-gyp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">npm i -g --production windows-build-tools
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>windows-build-tools 安装时间可能会长一点，要耐心等待。&lt;/p>
+&lt;h2 id="项目配置">项目配置&lt;/h2>
+&lt;p>在安装 npm 模块之前还要设置一些环境变量，建议在项目目录下放一个 &lt;code>.npmrc&lt;/code> 文件，内容如下：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="l">registry=https://registry.npm.taobao.org&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="l">NODEJS_ORG_MIRROR=https://npm.taobao.org/mirrors/node&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="l">ELECTRON_MIRROR=https://npm.taobao.org/mirrors/electron&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="l">arch=ia32&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="l">target_arch=ia32&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="l">msvs_version=2015&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="l">disturl=https://atom.io/download/electron&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="l">runtime=electron&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="l">target=1.8.4&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="l">build_from_source=true&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>参数说明：&lt;/p>
+&lt;ul>
+&lt;li>registry - 配置 npm 包镜像&lt;/li>
+&lt;li>NODEJS_ORG_MIRROR - 配置 Node.js 头文件下载镜像&lt;/li>
+&lt;li>ELECTRON_MIRROR - Electron 下载镜像&lt;/li>
+&lt;li>disturl - Electron 头文件镜像（用了 electron-rebuild 模块才需要）&lt;/li>
+&lt;li>arch、target_arch - 根据目标环境定义为 ia32 或 x64&lt;/li>
+&lt;/ul>
+&lt;h2 id="编译">编译&lt;/h2>
+&lt;p>通过以上配置不需要 &lt;a class="link" href="https://github.com/electron/electron-rebuild" target="_blank" rel="noopener"
+>electron-rebuild&lt;/a> ，直接用 npm 或 yarn 安装新原生包的时候，会自动编译为适用当前 electron 版本的原生模块到 &lt;code>{module_name}/build/Release/xxx.node&lt;/code>。由于这个构建后的路径是动态的，&lt;code>node-ffi&lt;/code> 等第三方模块会使用 &lt;a class="link" href="https://github.com/TooTallNate/node-bindings" target="_blank" rel="noopener"
+>bindings&lt;/a> 去动态找到这个 .node 文件。bindings 的原理是，首先定位到当前包的目录，然后通过预设一些搜寻路径，一个个尝试读取，直到找到为止。&lt;/p>
+&lt;h2 id="项目构建">项目构建&lt;/h2>
+&lt;h3 id="问题找不到-node-文件">问题：找不到 .node 文件&lt;/h3>
+&lt;p>bindings 的搜寻方式在 js 源码未压缩的情况下当然没问题，但我们的项目中通常还使用了 webpack。
+在开发模式下能够找到 node_modules 下的文件也没有问题，构建到生产环境后就没有 node_modules 了，而且 webpack 也不支持打包动态路径的文件。我想到两种解决方案：&lt;/p>
+&lt;p>方案一、将 node-ffi 拷贝一份修改 bindings 为写死路径，当然每个用到 bindings 的包都要修改。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-javascript" data-lang="javascript">&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// ffi 下的 bindings.js
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="nx">module&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">exports&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">require&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;bindings&amp;#39;&lt;/span>&lt;span class="p">)(&lt;/span>&lt;span class="s1">&amp;#39;ffi_bindings.node&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// 改为
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="nx">module&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">exports&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">require&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;../build/Release/ffi_bindings.node&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>方案二、自己实现一个 bindings 映射，并利用 webpack 的 alias 功能替换 bindings 模块。&lt;/p>
+&lt;ol>
+&lt;li>增加 bindings.js&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-javascript" data-lang="javascript">&lt;span class="line">&lt;span class="cl">&lt;span class="kd">function&lt;/span> &lt;span class="nx">bindings&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="nx">name&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="nx">name&lt;/span> &lt;span class="o">===&lt;/span> &lt;span class="s1">&amp;#39;ffi_bindings.node&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="nx">require&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;ffi/build/Release/ffi_bindings.node&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">if&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="nx">name&lt;/span> &lt;span class="o">===&lt;/span> &lt;span class="s1">&amp;#39;binding&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="nx">require&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;ref/build/Release/binding.node&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">module&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">exports&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">bindings&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ol start="2">
+&lt;li>配置 webpack 别名&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-javascript" data-lang="javascript">&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// webpack.main.config.js
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="nx">module&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">exports&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">...,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">resolve&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">extensions&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">[&lt;/span>&lt;span class="s1">&amp;#39;.js&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;.json&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;.node&amp;#39;&lt;/span>&lt;span class="p">],&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">alias&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// 如果用 bindings 包，就会找不到 .node 模块，这里替换成自己的实现
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span> &lt;span class="s1">&amp;#39;bindings&amp;#39;&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="nx">path&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">resolve&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">__dirname&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;../addons/bindings.js&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">...&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>显然方案二更好一点，只需要自己实现一个 bindings.js，而不用去动第三方包的源码，所以我们直接用了方案二。&lt;/p>
+&lt;h3 id="问题打包-asar-后提取出-node-文件">问题：打包 asar 后，提取出 .node 文件&lt;/h3>
+&lt;p>Electron 官方文档&lt;a class="link" href="https://electronjs.org/docs/tutorial/application-packaging" target="_blank" rel="noopener"
+>应用程序打包&lt;/a>有说明，二进制文件不要在 asar 中执行，需要 unpack 出来。我们用了 &lt;a class="link" href="https://github.com/electron-userland/electron-packager" target="_blank" rel="noopener"
+>electron-packager&lt;/a> 可以通过 &lt;a class="link" href="https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#asar" target="_blank" rel="noopener"
+>asar&lt;/a> 参数配置：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-javascript" data-lang="javascript">&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">asar&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">unpack&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s1">&amp;#39;*.node&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>这样，会把 .node 文件都提取到 &lt;code>app.asar.unpacked&lt;/code> 目录。但是它只负责提取并不会自动更新 .node 文件的访问地址到新的路径。所以我想到了用 webpack 的 &lt;code>file-loader&lt;/code>：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-javascript" data-lang="javascript">&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// webpack.main.config.js
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="nx">module&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">rules&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">test&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="sr">/\.node$/&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">loader&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s1">&amp;#39;file-loader&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">options&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">name&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s1">&amp;#39;[name].[ext]&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">outputPath&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s1">&amp;#39;addons&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">publicPath&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s1">&amp;#39;../../app.asar.unpacked/addons&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>我 app 打包后的项目结构是这样的&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl">app.asar.unpacked
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">app
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">---main
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">---renderer
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">---package.json
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>JS 是在 main 目录的主线程里面访问原生模块的，打包出来的路径也是这样。所以相对路径是要向上两级找到 app.asar.unpacked 目录。&lt;/p>
+&lt;p>运行一下 &lt;code>npm run build&lt;/code> 打包。&lt;/p>
+&lt;p>&lt;img src="https://blog.niceue.com/img/emoji/smile.png"
+loading="lazy"
+alt="smile.png"
+>&lt;/p>
+&lt;p>文件按我预期那样生成好了!&lt;/p>
+&lt;p>好的，运行一下程序：&lt;/p>
+&lt;blockquote>
+&lt;p>TypeError: Cannot read property &amp;lsquo;int64&amp;rsquo; of undefined&lt;/p>
+&lt;/blockquote>
+&lt;p>程序跑不起来了！&lt;/p>
+&lt;p>&lt;img src="https://blog.niceue.com/img/emoji/kill.png"
+loading="lazy"
+alt="kill.png"
+>&lt;/p>
+&lt;p>bindings 也是直接 require(&amp;lsquo;addon.node&amp;rsquo;) 呀，Node.js 官网&lt;a class="link" href="http://nodejs.cn/api/addons.html#addons_loading_addons_using_require" target="_blank" rel="noopener"
+>也是这样说的&lt;/a>。怎么构建后就不行了呢？&lt;/p>
+&lt;p>后面，我在webpack 的 loader 中找到 &lt;a class="link" href="https://doc.webpack-china.org/loaders/node-loader/" target="_blank" rel="noopener"
+>node-loader&lt;/a>，里面说明&lt;/p>
+&lt;blockquote>
+&lt;p>在 enhanced-require 中执行 node add-ons
+所以，node-loader 是针对魔改过的 &lt;code>require&lt;/code>（非 node 环境 require）的。这有可能是在 Electron 或是 webpack 发生的。&lt;/p>
+&lt;/blockquote>
+&lt;p>于是我对&lt;code>.node&lt;/code>文件增加一个&lt;code>node-loader&lt;/code>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-javascript" data-lang="javascript">&lt;span class="line">&lt;span class="cl">&lt;span class="nx">module&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">rules&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">test&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="sr">/\.node$/&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">use&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">[&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s1">&amp;#39;node-loader&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">loader&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s1">&amp;#39;file-loader&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">options&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">name&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s1">&amp;#39;[name].[ext]&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">outputPath&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s1">&amp;#39;addons&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">publicPath&lt;/span>&lt;span class="o">:&lt;/span> &lt;span class="s1">&amp;#39;../../app.asar.unpacked/addons&amp;#39;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>然后重新构建。&lt;strong>一切问题都解决了！&lt;/strong>&lt;/p>
+&lt;p>&lt;img src="https://blog.niceue.com/img/emoji/cool.png"
+loading="lazy"
+alt="cool.png"
+>&lt;/p>
+&lt;p>&lt;strong>相关资料&lt;/strong>：&lt;br>
+&lt;a class="link" href="https://electronjs.org/docs/tutorial/using-native-node-modules" target="_blank" rel="noopener"
+>https://electronjs.org/docs/tutorial/using-native-node-modules&lt;/a>&lt;br>
+&lt;a class="link" href="https://nodejs.org/dist/latest/docs/api/addons.html" target="_blank" rel="noopener"
+>https://nodejs.org/dist/latest/docs/api/addons.html&lt;/a>&lt;br>
+&lt;a class="link" href="https://github.com/nodejs/node-gyp/" target="_blank" rel="noopener"
+>https://github.com/nodejs/node-gyp/&lt;/a>&lt;br>
+&lt;a class="link" href="https://doc.webpack-china.org/loaders/node-loader/" target="_blank" rel="noopener"
+>https://doc.webpack-china.org/loaders/node-loader/&lt;/a>&lt;/p></description></item><item><title>适用移动端的样式重置</title><link>https://blog.niceue.com/p/style-reset-for-mobile/</link><pubDate>Fri, 24 Nov 2017 22:12:00 +0000</pubDate><guid>https://blog.niceue.com/p/style-reset-for-mobile/</guid><description>&lt;img src="https://blog.niceue.com/img/code.jpg" alt="Featured image of post 适用移动端的样式重置" />&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-css" data-lang="css">&lt;span class="line">&lt;span class="cl">&lt;span class="c">/**********
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c"> * reset
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c"> *********/&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="o">*&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">box-sizing&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">border-box&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="kp">-webkit-&lt;/span>&lt;span class="n">tap-highlight-color&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="nb">rgba&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">);}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">body&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">dl&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">dt&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">dd&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">ul&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">ol&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">li&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">h1&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h2&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h3&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h4&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h5&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h6&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">pre&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">code&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">form&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">fieldset&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">legend&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">input&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">textarea&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">p&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">blockquote&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">th&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">td&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">hr&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">button&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">article&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">aside&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">details&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">figcaption&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">figure&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">footer&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">header&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">menu&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">nav&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">section&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">margin&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">padding&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">border&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c">/* 默认不要下划线 */&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">a&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">text-decoration&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">none&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c">/* 按钮文本不可选 */&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">button&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">user-select&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">none&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">img&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">vertical-align&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">middle&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c">/* 加载不出来的图片不要显示灰色边框 */&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">img&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">not&lt;/span>&lt;span class="o">([&lt;/span>&lt;span class="nt">src&lt;/span>&lt;span class="o">]),&lt;/span>&lt;span class="nt">img&lt;/span>&lt;span class="o">[&lt;/span>&lt;span class="nt">src&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;&amp;#34;&lt;/span>&lt;span class="o">]&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">opacity&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">ul&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">ol&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">list-style&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">none&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">table&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">border-collapse&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">collapse&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">border-spacing&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">input&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">select&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">button&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">textarea&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">font-size&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">100&lt;/span>&lt;span class="kt">%&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">font&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">inherit&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">html&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">body&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">height&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">100&lt;/span>&lt;span class="kt">%&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">overflow-x&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">hidden&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div></description></item><item><title>阻止请求 favicon.ico 图标</title><link>https://blog.niceue.com/p/blocking-requests-for-the-favicon-icon/</link><pubDate>Wed, 23 Nov 2016 00:00:00 +0000</pubDate><guid>https://blog.niceue.com/p/blocking-requests-for-the-favicon-icon/</guid><description>&lt;img src="https://blog.niceue.com/img/stop.jpg" alt="Featured image of post 阻止请求 favicon.ico 图标" />&lt;blockquote>
+&lt;p>出于优化的考虑，要么就有这个图标，要么就禁止产生这个请求。&lt;/p>
+&lt;/blockquote>
+&lt;p>在页面的 head 区域，加上如下代码实现屏蔽：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-html" data-lang="html">&lt;span class="line">&lt;span class="cl">&lt;span class="p">&amp;lt;&lt;/span>&lt;span class="nt">link&lt;/span> &lt;span class="na">rel&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s">&amp;#34;icon&amp;#34;&lt;/span> &lt;span class="na">href&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s">&amp;#34;data:;base64,=&amp;#34;&lt;/span>&lt;span class="p">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>或者详细一点&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-html" data-lang="html">&lt;span class="line">&lt;span class="cl">&lt;span class="p">&amp;lt;&lt;/span>&lt;span class="nt">link&lt;/span> &lt;span class="na">rel&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s">&amp;#34;icon&amp;#34;&lt;/span> &lt;span class="na">href&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s">&amp;#34;data:image/ico;base64,aWNv&amp;#34;&lt;/span>&lt;span class="p">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div></description></item><item><title>Node.js 中的 DES 加解密</title><link>https://blog.niceue.com/p/des-encryption-and-decryption-in-nodejs/</link><pubDate>Tue, 05 Jan 2016 00:00:00 +0000</pubDate><guid>https://blog.niceue.com/p/des-encryption-and-decryption-in-nodejs/</guid><description>&lt;img src="https://blog.niceue.com/img/nodejs.png" alt="Featured image of post Node.js 中的 DES 加解密" />&lt;p>Node.js 自带强大的加密功能 Crypto，它是基于 OpenSSL 库实现的加密技术。
+DES 是一种对称加密算法，密匙长度必须是8的整数倍，在一些简单的应用场景经常被使用。&lt;/p>
+&lt;p>为了网络上信息传输的安全（防止第三方窃取信息看到明文），发送发和接收方分别进行加密和解密，这样信息在网络上传输的时候就是相对安全的。&lt;/p>
+&lt;p>DES 加密模式有： Electronic Codebook (ECB) , Cipher Block Chaining (CBC) , Cipher Feedback (CFB) , Output Feedback (OFB)。这里以密文分组链接模式 CBC 为例，使用了相同的 key 和 iv (Initialization Vector)&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-javascript" data-lang="javascript">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="nx">crypto&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">require&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;crypto&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// DES 加密
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="kd">function&lt;/span> &lt;span class="nx">desEncrypt&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="nx">message&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">key&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">length&lt;/span> &lt;span class="o">&amp;gt;=&lt;/span> &lt;span class="mi">8&lt;/span> &lt;span class="o">?&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">slice&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">8&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="o">:&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">concat&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;0&amp;#39;&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">repeat&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">8&lt;/span> &lt;span class="o">-&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">length&lt;/span>&lt;span class="p">))&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kr">const&lt;/span> &lt;span class="nx">keyHex&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="nx">Buffer&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">key&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kr">const&lt;/span> &lt;span class="nx">cipher&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">crypto&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">createCipheriv&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;des-cbc&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">keyHex&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">keyHex&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kd">let&lt;/span> &lt;span class="nx">c&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">cipher&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">update&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">message&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;utf8&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;base64&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">c&lt;/span> &lt;span class="o">+=&lt;/span> &lt;span class="nx">cipher&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="kr">final&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;base64&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="nx">c&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// DES 解密
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">&lt;/span>&lt;span class="kd">function&lt;/span> &lt;span class="nx">desDecrypt&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="nx">text&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">key&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">length&lt;/span> &lt;span class="o">&amp;gt;=&lt;/span> &lt;span class="mi">8&lt;/span> &lt;span class="o">?&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">slice&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">8&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="o">:&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">concat&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;0&amp;#39;&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">repeat&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">8&lt;/span> &lt;span class="o">-&lt;/span> &lt;span class="nx">key&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">length&lt;/span>&lt;span class="p">))&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kr">const&lt;/span> &lt;span class="nx">keyHex&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="nx">Buffer&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">key&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kr">const&lt;/span> &lt;span class="nx">cipher&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">crypto&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">createDecipheriv&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;des-cbc&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">keyHex&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="nx">keyHex&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kd">let&lt;/span> &lt;span class="nx">c&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nx">cipher&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">update&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="nx">text&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;base64&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;utf8&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">c&lt;/span> &lt;span class="o">+=&lt;/span> &lt;span class="nx">cipher&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="kr">final&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;utf8&amp;#39;&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="nx">c&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>要查看 Node.js 支持哪些 Cipher,可以通过 &lt;code>crypto.getCiphers()&lt;/code> 查看&lt;/p>
+&lt;p>相关资料：&lt;br>
+&lt;a class="link" href="https://nodejs.org/api/crypto.html" target="_blank" rel="noopener"
+>https://nodejs.org/api/crypto.html&lt;/a>&lt;/p></description></item><item><title>使用国内 npm 镜像</title><link>https://blog.niceue.com/p/using-domestic-npm-mirrors/</link><pubDate>Sun, 31 May 2015 00:00:00 +0000</pubDate><guid>https://blog.niceue.com/p/using-domestic-npm-mirrors/</guid><description>&lt;img src="https://blog.niceue.com/p/using-domestic-npm-mirrors/npm-cover.png" alt="Featured image of post 使用国内 npm 镜像" />&lt;h2 id="国内-npm-镜像源">国内 npm 镜像源：&lt;/h2>
+&lt;ul>
+&lt;li>npmmirror 镜像源： &lt;a class="link" href="https://registry.npmmirror.com" target="_blank" rel="noopener"
+>https://registry.npmmirror.com&lt;/a>&lt;/li>
+&lt;li>华为云镜像源：&lt;a class="link" href="https://mirrors.huaweicloud.com/repository/npm/" target="_blank" rel="noopener"
+>https://mirrors.huaweicloud.com/repository/npm/&lt;/a>&lt;/li>
+&lt;/ul>
+&lt;h2 id="修改-npm-镜像源">修改 npm 镜像源&lt;/h2>
+&lt;h3 id="方式一命令行修改配置">方式一、命令行修改配置&lt;/h3>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 配置 registry&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">npm config &lt;span class="nb">set&lt;/span> registry https://registry.npmmirror.com
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 验证配置是否修改成功&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">npm config get registry
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="方式二添加-npmrc-配置文件">方式二、添加 .npmrc 配置文件&lt;/h3>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">&lt;span class="nv">registry&lt;/span> &lt;span class="o">=&lt;/span> https://registry.npmmirror.com
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;code>.npmrc&lt;/code> 按以下 4 级逐级查找，可以按需求选择配置的地方&lt;/p>
+&lt;ol>
+&lt;li>项目目录：/path/to/my/project/.npmrc&lt;/li>
+&lt;li>用户目录：~/.npmrc&lt;/li>
+&lt;li>全局配置：$PREFIX/etc/.npmrc&lt;/li>
+&lt;li>内置配置：/path/to/npm/.npmrc&lt;/li>
+&lt;/ol></description></item><item><title>禁止密码表单被自动填充</title><link>https://blog.niceue.com/p/disable-form-autofill/</link><pubDate>Thu, 14 May 2015 00:00:00 +0000</pubDate><guid>https://blog.niceue.com/p/disable-form-autofill/</guid><description>&lt;img src="https://blog.niceue.com/img/stop.jpg" alt="Featured image of post 禁止密码表单被自动填充" />&lt;h2 id="记住密码带来安全隐患">记住密码带来安全隐患&lt;/h2>
+&lt;p>当别人打开你的浏览器，就能直接登录进去。&lt;/p>
+&lt;p>更进一步，若网站被 xss 攻击者利用，可以轻松获取到你的明文密码信息。攻击者只要构造一个包含用户名和密码的表单插入到 DOM，延时等待浏览器的自动填充，然后就可以获取到密码值。&lt;/p>
+&lt;p>即使不被 xss 攻击，也可能被他人打开你的浏览器直接获取到明文密码。&lt;/p>
+&lt;h2 id="如何禁止表单自动填充">如何禁止表单自动填充&lt;/h2>
+&lt;h3 id="更改浏览器设置">更改浏览器设置&lt;/h3>
+&lt;p>作为个人用户可以考虑禁用这个选项，但作为网站还是得寻求其他方式，我们不能保证用户都更改设置。&lt;/p>
+&lt;h3 id="给表单设置-autocompleteoff">给表单设置 autocomplete=&amp;ldquo;off&amp;rdquo;&lt;/h3>
+&lt;p>实践证明 autocomplete 这个属性可以关掉输入框获得焦点时的下拉选项，但不能禁用表单被自动填充。在 chrome 开发工具中可以看到，当 input 被自动填充后，会有一个 input:-webkit-autofill 的样式，但这个样式不可更改。而且也没有提供一个 autofill 的 DOM 接口来改变这个行为。&lt;/p>
+&lt;h3 id="有效的方式">有效的方式&lt;/h3>
+&lt;p>用 Javascript 动态设置 password 的 type，来绕过浏览器的自动填充。经过实践，下面代码被证明有效果：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-js" data-lang="js">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="nx">input&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nb">document&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">querySelector&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;input[type=&amp;#34;password&amp;#34;]&amp;#39;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">input&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">setAttribute&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;type&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;text&amp;#39;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">setTimeout&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kd">function&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">input&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">setAttribute&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;type&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;password&amp;#39;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">},&lt;/span> &lt;span class="mi">500&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div></description></item><item><title>去除 Auto-filled 输入框上的黄色背景</title><link>https://blog.niceue.com/p/remove-yellow-background-on-autofill-input-fields/</link><pubDate>Sat, 25 Oct 2014 00:00:00 +0000</pubDate><guid>https://blog.niceue.com/p/remove-yellow-background-on-autofill-input-fields/</guid><description>&lt;img src="https://blog.niceue.com/p/remove-yellow-background-on-autofill-input-fields/cover.webp" alt="Featured image of post 去除 Auto-filled 输入框上的黄色背景" />&lt;p>在 Chrome，当选择了输入框的 autocomplete 值后，输入框会变成黄色背景。同时你会发现在 user agent 样式中有如下样式：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-css" data-lang="css">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">input&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">textarea&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">select&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">background-color&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="nb">rgb&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">250&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">255&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">189&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">background-image&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">none&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">color&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="nb">rgb&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>大多数童鞋都会采取覆盖这个默认样式的思路，甚至加 !important，结果都是无济于事。&lt;/p>
+&lt;p>难道真的不能破？&lt;/p>
+&lt;p>其实，在 &lt;a class="link" href="http://stackoverflow.com/questions/2338102/override-browser-form-filling-and-input-highlighting-with-html-css" target="_blank" rel="noopener"
+>stackoverflow&lt;/a> 上早有人问这个问题了。比较靠谱的是采用内阴影强制覆盖背景：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-css" data-lang="css">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">input&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">input&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">focus&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">box-shadow&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="mi">100&lt;/span>&lt;span class="kt">px&lt;/span> &lt;span class="kc">white&lt;/span> &lt;span class="kc">inset&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kp">-webkit-&lt;/span>&lt;span class="n">text-fill-color&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mh">#333&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>color 的设置同样不能覆盖，但是可以用 -webkit-text-fill-color 设定文字填充颜色的方式解决，所以上面的两行代码都是必须的，你可以根据自己的实际情况修改颜色值。还有需要注意的是，focus 的样式设置也是必须的。&lt;/p>
+&lt;p>最后，其实还有更简单的办法，如果你不需要 autocomplete 功能，那么关掉就不会有这个烦恼了。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-html" data-lang="html">&lt;span class="line">&lt;span class="cl">&lt;span class="p">&amp;lt;&lt;/span>&lt;span class="nt">form&lt;/span> &lt;span class="na">autocomplete&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s">&amp;#34;off&amp;#34;&lt;/span>&lt;span class="p">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div></description></item></channel></rss>

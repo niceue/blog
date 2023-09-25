@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Windows on Jony's Blog</title><link>https://blog.niceue.com/tags/windows/</link><description>Recent content in Windows on Jony's Blog</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Thu, 28 Jul 2022 14:52:00 +0000</lastBuildDate><atom:link href="https://blog.niceue.com/tags/windows/index.xml" rel="self" type="application/rss+xml"/><item><title>在 Windows WSL2 环境安装 Redis 并设置局域网访问</title><link>https://blog.niceue.com/p/installing-redis-on-windows-wsl2-and-setting-up-lan-access/</link><pubDate>Thu, 28 Jul 2022 14:52:00 +0000</pubDate><guid>https://blog.niceue.com/p/installing-redis-on-windows-wsl2-and-setting-up-lan-access/</guid><description>&lt;img src="https://blog.niceue.com/p/installing-redis-on-windows-wsl2-and-setting-up-lan-access/cover.jpg" alt="Featured image of post 在 Windows WSL2 环境安装 Redis 并设置局域网访问" />&lt;h2 id="背景">背景&lt;/h2>
+&lt;p>需要多台电脑访问同一个本地的 redis 服务。打算在连接网线的固定IP的电脑上来安装 Redis，这台电脑是 Windows 10 系统，而 Redis 官方没有直接支持在 Windows 下安装运行。&lt;/p>
+&lt;p>下面是 &lt;a class="link" href="https://redis.io/docs/getting-started/installation/install-redis-on-windows/" target="_blank" rel="noopener"
+>Redis 官方原话&lt;/a>：&lt;/p>
+&lt;blockquote>
+&lt;p>Use Redis on Windows for development Redis is not officially supported
+on Windows. However, you can install Redis on Windows for development
+by the following the instructions below.&lt;/p>
+&lt;p>To install Redis on Windows, you&amp;rsquo;ll first need to enable WSL2 (Windows
+Subsystem for Linux). WSL2 lets you run Linux binaries natively on
+Windows. For this method to work, you&amp;rsquo;ll need to be running Windows 10
+version 2004 and higher or Windows 11.&lt;/p>
+&lt;/blockquote>
+&lt;p>所以官方推荐安装在 &lt;a class="link" href="https://docs.microsoft.com/zh-cn/windows/wsl/" target="_blank" rel="noopener"
+>WSL2&lt;/a> 子系统上。&lt;/p>
+&lt;h2 id="安装-wsl2">安装 WSL2&lt;/h2>
+&lt;p>在 Windows 10 上安装 WSL2 很简单：&lt;/p>
+&lt;ol>
+&lt;li>打开 PowerShell(管理员)&lt;/li>
+&lt;li>运行命令&lt;/li>
+&lt;/ol>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">wsl --install
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>此命令将启用所需的可选组件，下载最新的 Linux 内核，将 WSL2 设置为默认值，并安装 Linux 发行版（默认安装 Ubuntu）。这个安装过程很快，期间会提示要重启一下电脑，电脑重启后会接着安装完成。&lt;/p>
+&lt;p>WSL2 安装完成后，可以在 PowerShell 用 &lt;code>wsl&lt;/code> 命令直接进入 Linux 子系统。&lt;/p>
+&lt;h2 id="安装和配置-redis">安装和配置 Redis&lt;/h2>
+&lt;h3 id="安装-redis">安装 Redis：&lt;/h3>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">curl -fsSL https://packages.redis.io/gpg &lt;span class="p">|&lt;/span> sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">echo&lt;/span> &lt;span class="s2">&amp;#34;deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb &lt;/span>&lt;span class="k">$(&lt;/span>lsb_release -cs&lt;span class="k">)&lt;/span>&lt;span class="s2"> main&amp;#34;&lt;/span> &lt;span class="p">|&lt;/span> sudo tee /etc/apt/sources.list.d/redis.list
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">sudo apt-get update
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">sudo apt-get install redis
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="配置-redis-支持局域网访问">配置 Redis 支持局域网访问：&lt;/h3>
+&lt;p>修改 &lt;code>/etc/redis/redis.conf&lt;/code>，注释掉 &lt;code>bind 127.0.0.1&lt;/code>，并将 &lt;code>protected-mode&lt;/code> 改为 &lt;code>no&lt;/code>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># bind 127.0.0.1&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">protected-mode no
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h3 id="启动-redis">启动 Redis&lt;/h3>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">sudo service redis-server start
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="从局域网访问-wsl2-网络">从局域网访问 WSL2 网络&lt;/h2>
+&lt;p>要实现从局域网访问 WSL2 网络，需要在 Windows 上配置 端口转发 和 防火墙允许入站规则。参考以下 PowerShell 命令（需以管理员权限执行）：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;span class="lnt">9
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 查询 WSL2 IP 地址&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">PS C:&lt;span class="se">\U&lt;/span>sers&lt;span class="se">\j&lt;/span>ony&amp;gt; wsl -- hostname -I
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">172.19.42.138
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 配置端口转发：外网访问 windows 8080 端口转发到 172.19.42.138:8080&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">PS C:&lt;span class="se">\U&lt;/span>sers&lt;span class="se">\j&lt;/span>ony&amp;gt; netsh interface portproxy add v4tov4 &lt;span class="nv">listenport&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">6379&lt;/span> &lt;span class="nv">connectaddress&lt;/span>&lt;span class="o">=&lt;/span>172.19.42.138 &lt;span class="nv">connectport&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">6379&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 添加允许入站规则&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">PS C:&lt;span class="se">\U&lt;/span>sers&lt;span class="se">\j&lt;/span>ony&amp;gt; New-NetFirewallRule -DisplayName &lt;span class="s2">&amp;#34;Allow Inbound TCP Port 6379&amp;#34;&lt;/span> -Direction Inbound -Action Allow -Protocol TCP -LocalPort &lt;span class="m">6379&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>配置完后可在局域网用其他设备通过 Windows IP 访问 WSL2 服务。&lt;/p>
+&lt;p>对应的删除配置命令：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 删除端口转发规则&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">C:&lt;span class="se">\U&lt;/span>sers&lt;span class="se">\j&lt;/span>ony&amp;gt; netsh interface portproxy delete v4tov4 &lt;span class="nv">listenport&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="m">6379&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 删除防火墙入站规则&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">C:&lt;span class="se">\U&lt;/span>sers&lt;span class="se">\j&lt;/span>ony&amp;gt; Remove-NetFirewallRule -DisplayName &lt;span class="s2">&amp;#34;Allow Inbound TCP Port 6379&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="参考资料">参考资料：&lt;/h2>
+&lt;ul>
+&lt;li>&lt;a class="link" href="https://redis.io/docs/getting-started/installation/install-redis-on-windows/" target="_blank" rel="noopener"
+>Install Redis on Windows&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://docs.microsoft.com/zh-cn/windows/wsl/install" target="_blank" rel="noopener"
+>使用 WSL 在 Windows 上安装 Linux&lt;/a>&lt;/li>
+&lt;li>&lt;a class="link" href="https://ruihusky.github.io/ruihusky/posts/2020-12-11_wsl2-net-config/" target="_blank" rel="noopener"
+>Windows 10 WSL2 网络配置&lt;/a>&lt;/li>
+&lt;/ul></description></item></channel></rss>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Chrome on Jony's Blog</title><link>https://blog.niceue.com/tags/chrome/</link><description>Recent content in Chrome on Jony's Blog</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Thu, 14 May 2015 00:00:00 +0000</lastBuildDate><atom:link href="https://blog.niceue.com/tags/chrome/index.xml" rel="self" type="application/rss+xml"/><item><title>禁止密码表单被自动填充</title><link>https://blog.niceue.com/p/disable-form-autofill/</link><pubDate>Thu, 14 May 2015 00:00:00 +0000</pubDate><guid>https://blog.niceue.com/p/disable-form-autofill/</guid><description>&lt;img src="https://blog.niceue.com/img/stop.jpg" alt="Featured image of post 禁止密码表单被自动填充" />&lt;h2 id="记住密码带来安全隐患">记住密码带来安全隐患&lt;/h2>
+&lt;p>当别人打开你的浏览器，就能直接登录进去。&lt;/p>
+&lt;p>更进一步，若网站被 xss 攻击者利用，可以轻松获取到你的明文密码信息。攻击者只要构造一个包含用户名和密码的表单插入到 DOM，延时等待浏览器的自动填充，然后就可以获取到密码值。&lt;/p>
+&lt;p>即使不被 xss 攻击，也可能被他人打开你的浏览器直接获取到明文密码。&lt;/p>
+&lt;h2 id="如何禁止表单自动填充">如何禁止表单自动填充&lt;/h2>
+&lt;h3 id="更改浏览器设置">更改浏览器设置&lt;/h3>
+&lt;p>作为个人用户可以考虑禁用这个选项，但作为网站还是得寻求其他方式，我们不能保证用户都更改设置。&lt;/p>
+&lt;h3 id="给表单设置-autocompleteoff">给表单设置 autocomplete=&amp;ldquo;off&amp;rdquo;&lt;/h3>
+&lt;p>实践证明 autocomplete 这个属性可以关掉输入框获得焦点时的下拉选项，但不能禁用表单被自动填充。在 chrome 开发工具中可以看到，当 input 被自动填充后，会有一个 input:-webkit-autofill 的样式，但这个样式不可更改。而且也没有提供一个 autofill 的 DOM 接口来改变这个行为。&lt;/p>
+&lt;h3 id="有效的方式">有效的方式&lt;/h3>
+&lt;p>用 Javascript 动态设置 password 的 type，来绕过浏览器的自动填充。经过实践，下面代码被证明有效果：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-js" data-lang="js">&lt;span class="line">&lt;span class="cl">&lt;span class="kr">const&lt;/span> &lt;span class="nx">input&lt;/span> &lt;span class="o">=&lt;/span> &lt;span class="nb">document&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">querySelector&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;input[type=&amp;#34;password&amp;#34;]&amp;#39;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">input&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">setAttribute&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;type&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;text&amp;#39;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nx">setTimeout&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="kd">function&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nx">input&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="nx">setAttribute&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s1">&amp;#39;type&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="s1">&amp;#39;password&amp;#39;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">},&lt;/span> &lt;span class="mi">500&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div></description></item></channel></rss>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>CSS on Jony's Blog</title><link>https://blog.niceue.com/tags/css/</link><description>Recent content in CSS on Jony's Blog</description><generator>Hugo -- gohugo.io</generator><language>zh-cn</language><lastBuildDate>Fri, 24 Nov 2017 22:12:00 +0000</lastBuildDate><atom:link href="https://blog.niceue.com/tags/css/index.xml" rel="self" type="application/rss+xml"/><item><title>适用移动端的样式重置</title><link>https://blog.niceue.com/p/style-reset-for-mobile/</link><pubDate>Fri, 24 Nov 2017 22:12:00 +0000</pubDate><guid>https://blog.niceue.com/p/style-reset-for-mobile/</guid><description>&lt;img src="https://blog.niceue.com/img/code.jpg" alt="Featured image of post 适用移动端的样式重置" />&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-css" data-lang="css">&lt;span class="line">&lt;span class="cl">&lt;span class="c">/**********
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c"> * reset
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c"> *********/&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="o">*&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">box-sizing&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">border-box&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="kp">-webkit-&lt;/span>&lt;span class="n">tap-highlight-color&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="nb">rgba&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">);}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">body&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">dl&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">dt&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">dd&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">ul&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">ol&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">li&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">h1&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h2&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h3&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h4&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h5&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">h6&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">pre&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">code&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">form&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">fieldset&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">legend&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">input&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">textarea&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">p&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">blockquote&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">th&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">td&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">hr&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">button&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">article&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">aside&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">details&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">figcaption&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">figure&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">footer&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">header&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">menu&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">nav&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">section&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">margin&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">padding&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">border&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c">/* 默认不要下划线 */&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">a&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">text-decoration&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">none&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c">/* 按钮文本不可选 */&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">button&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">user-select&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">none&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">img&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">vertical-align&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">middle&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c">/* 加载不出来的图片不要显示灰色边框 */&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">img&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">not&lt;/span>&lt;span class="o">([&lt;/span>&lt;span class="nt">src&lt;/span>&lt;span class="o">]),&lt;/span>&lt;span class="nt">img&lt;/span>&lt;span class="o">[&lt;/span>&lt;span class="nt">src&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s2">&amp;#34;&amp;#34;&lt;/span>&lt;span class="o">]&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">opacity&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">ul&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">ol&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">list-style&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">none&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">table&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">border-collapse&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">collapse&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">border-spacing&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">input&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">select&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">button&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">textarea&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">font-size&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">100&lt;/span>&lt;span class="kt">%&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">font&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">inherit&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">html&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">body&lt;/span> &lt;span class="p">{&lt;/span>&lt;span class="k">height&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">100&lt;/span>&lt;span class="kt">%&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">overflow-x&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">hidden&lt;/span>&lt;span class="p">;}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div></description></item><item><title>去除 Auto-filled 输入框上的黄色背景</title><link>https://blog.niceue.com/p/remove-yellow-background-on-autofill-input-fields/</link><pubDate>Sat, 25 Oct 2014 00:00:00 +0000</pubDate><guid>https://blog.niceue.com/p/remove-yellow-background-on-autofill-input-fields/</guid><description>&lt;img src="https://blog.niceue.com/p/remove-yellow-background-on-autofill-input-fields/cover.webp" alt="Featured image of post 去除 Auto-filled 输入框上的黄色背景" />&lt;p>在 Chrome，当选择了输入框的 autocomplete 值后，输入框会变成黄色背景。同时你会发现在 user agent 样式中有如下样式：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-css" data-lang="css">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">input&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">textarea&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span>&lt;span class="o">,&lt;/span> &lt;span class="nt">select&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">background-color&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="nb">rgb&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">250&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">255&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">189&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">background-image&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kc">none&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">color&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="nb">rgb&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="mi">0&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>大多数童鞋都会采取覆盖这个默认样式的思路，甚至加 !important，结果都是无济于事。&lt;/p>
+&lt;p>难道真的不能破？&lt;/p>
+&lt;p>其实，在 &lt;a class="link" href="http://stackoverflow.com/questions/2338102/override-browser-form-filling-and-input-highlighting-with-html-css" target="_blank" rel="noopener"
+>stackoverflow&lt;/a> 上早有人问这个问题了。比较靠谱的是采用内阴影强制覆盖背景：&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-css" data-lang="css">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">input&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span>&lt;span class="o">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nt">input&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">-webkit-autofill&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="nd">focus&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">box-shadow&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="mi">0&lt;/span> &lt;span class="mi">100&lt;/span>&lt;span class="kt">px&lt;/span> &lt;span class="kc">white&lt;/span> &lt;span class="kc">inset&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kp">-webkit-&lt;/span>&lt;span class="n">text-fill-color&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="mh">#333&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>color 的设置同样不能覆盖，但是可以用 -webkit-text-fill-color 设定文字填充颜色的方式解决，所以上面的两行代码都是必须的，你可以根据自己的实际情况修改颜色值。还有需要注意的是，focus 的样式设置也是必须的。&lt;/p>
+&lt;p>最后，其实还有更简单的办法，如果你不需要 autocomplete 功能，那么关掉就不会有这个烦恼了。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-html" data-lang="html">&lt;span class="line">&lt;span class="cl">&lt;span class="p">&amp;lt;&lt;/span>&lt;span class="nt">form&lt;/span> &lt;span class="na">autocomplete&lt;/span>&lt;span class="o">=&lt;/span>&lt;span class="s">&amp;#34;off&amp;#34;&lt;/span>&lt;span class="p">&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div></description></item></channel></rss>
